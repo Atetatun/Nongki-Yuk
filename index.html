@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kapan Nieh? - Penyelamat Jadwal Gabutmu</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10377D',
+                        primaryHover: '#0b275b',
+                        accent: '#38bdf8',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2canvas & jsPDF for Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+            image-rendering: pixelated;
+        }
+        /* Animated Background Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .content-layer {
+            position: relative;
+            z-index: 10;
+        }
+        /* Glassmorphism Dynamic */
+        .glass-box {
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: all 0.3s ease;
+        }
+        .dark .glass-box {
+            background: rgba(15, 23, 42, 0.85);
+            color: #f8fafc;
+        }
+        .light .glass-box {
+            background: rgba(255, 255, 255, 0.9);
+            color: #0f172a;
+            border-color: rgba(16, 55, 125, 0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        /* Professional bounce & pulse animations */
+        @keyframes softBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-bounce-soft {
+            animation: softBounce 3s ease-in-out infinite;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        /* Pixel Avatar Box */
+        .pixel-avatar {
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#0b1329] text-slate-100 selection:bg-[#10377D] selection:text-white">
+
+    <!-- Background Particle Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Header Navigation -->
+    <header class="content-layer sticky top-0 bg-[#0b1329]/80 dark:bg-[#0b1329]/80 light:bg-white/80 backdrop-blur-md border-b border-slate-800/80 light:border-slate-200 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="playSound('click'); goToStep('splash')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10377D] to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-[#10377D]/40">
+                <i class="fa-solid fa-calendar-days"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg tracking-tight text-white light:text-slate-900 flex items-center gap-2">
+                    Kapan Nieh? <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#10377D]/30 border border-[#10377D] text-blue-400">Pro</span>
+                </h1>
+                <p class="text-xs text-slate-400 light:text-slate-600">Penyelamat Jadwal gabutmu</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <!-- Audio Toggle -->
+            <button onclick="toggleAudio()" id="audioToggleBtn" class="w-9 h-9 rounded-lg bg-slate-900 light:bg-slate-200 hover:opacity-80 border border-slate-700 light:border-slate-300 flex items-center justify-center transition text-xs" title="Sound Effect Toggle">
+                <i id="audioIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+            </button>
+            <!-- Language Switcher -->
+            <button onclick="playSound('click'); toggleLanguage()" class="px-3 py-1.5 rounded-lg bg-slate-900 light:bg-slate-200 hover:opacity-80 text-xs font-semibold border border-slate-700 light:border-slate-300 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-globe text-blue-400"></i>
+                <span id="langLabel">ID / EN</span>
+            </button>
+            <!-- Theme Switcher -->
+            <button onclick="playSound('click'); toggleTheme()" class="w-9 h-9 rounded-lg bg-slate-900 light:bg-slate-200 hover:opacity-80 border border-slate-700 light:border-slate-300 flex items-center justify-center transition" title="Toggle Theme">
+                <i id="themeIcon" class="fa-solid fa-moon text-amber-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="content-layer flex-1 max-w-5xl w-full mx-auto px-4 py-8 flex flex-col justify-center">
+
+        <!-- ================= STEP 0: SPLASH / WELCOME ================= -->
+        <div id="step-splash" class="page-step flex flex-col items-center text-center py-12 animate-pop">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10377D]/20 border border-[#10377D]/60 text-blue-300 text-xs font-semibold mb-6 animate-bounce-soft">
+                <i class="fa-solid fa-fire text-amber-400"></i> <span data-i18n="badgeSplash">Bebas Login Ribet • 100% Keren & Interaktif</span>
+            </div>
+            <h2 class="text-5xl lg:text-7xl font-black tracking-tight text-white light:text-slate-900 mb-4">
+                Kapan <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-[#10377D]">Nieh?</span>
+            </h2>
+            <p class="text-lg lg:text-xl font-medium text-slate-300 light:text-slate-700 max-w-xl mx-auto mb-10" data-i18n="heroSub">
+                Penyelamat Jadwal gabutmu
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 w-full max-w-sm justify-center mb-8">
+                <button onclick="playSound('click'); goToStep('profile')" class="w-full py-4 px-8 rounded-2xl bg-[#10377D] hover:bg-[#0b275b] text-white font-bold text-base shadow-xl shadow-[#10377D]/50 transition transform hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-3">
+                    <span data-i18n="btnStartNow">Mulai Sekarang</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Riwayat Acara (Local Storage History) -->
+            <div id="recentRoomsBox" class="w-full max-w-md glass-box rounded-2xl p-5 shadow-lg hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-bold text-slate-300 light:text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Riwayat Acara Terakhir
+                    </h3>
+                    <button onclick="clearHistory()" class="text-[10px] text-slate-500 hover:text-rose-400 transition">Hapus</button>
+                </div>
+                <div id="recentRoomsList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= STEP 1: CHIBI PIXEL HEAD AVATAR & NICKNAME ================= -->
+        <div id="step-profile" class="page-step hidden flex flex-col items-center py-6 max-w-md mx-auto w-full animate-pop">
+            <div class="w-full glass-box rounded-3xl p-6 lg:p-8 shadow-2xl">
+                <div class="text-center mb-6">
+                    <span class="text-xs font-bold text-blue-400 uppercase tracking-widest" data-i18n="step1Sub">Langkah 1 dari 3</span>
+                    <h3 class="text-2xl font-extrabold text-white light:text-slate-900 mt-1" data-i18n="step1Title">Kenalan Dulu Yuk!</h3>
+                    <p class="text-xs text-slate-400 light:text-slate-600 mt-1" data-i18n="step1Desc">Masukkan nama panggilan dan pilih chibi pixel head favoritmu.</p>
+                </div>
+
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 light:text-slate-700 uppercase tracking-wider mb-2" data-i18n="labelName">Nama Panggilan</label>
+                        <input type="text" id="inputNickname" placeholder="cth. Budi Ganteng" class="w-full px-4 py-3.5 rounded-xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-300 text-white light:text-slate-900 placeholder-slate-600 focus:outline-none focus:border-[#10377D] text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 light:text-slate-700 uppercase tracking-wider mb-2" data-i18n="labelAvatar">Pilih Chibi Pixel Head</label>
+                        <div class="grid grid-cols-4 gap-3" id="chibiAvatarGrid">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button onclick="playSound('click'); goToStep('splash')" class="w-1/3 py-3.5 rounded-xl bg-slate-900 light:bg-slate-200 hover:opacity-80 border border-slate-800 light:border-slate-300 text-slate-300 light:text-slate-700 font-bold text-sm transition">
+                            <span data-i18n="btnBack">Kembali</span>
+                        </button>
+                        <button onclick="playSound('click'); submitProfile()" class="w-2/3 py-3.5 rounded-xl bg-[#10377D] hover:bg-[#0b275b] text-white font-bold text-sm shadow-lg shadow-[#10377D]/40 transition flex items-center justify-center gap-2">
+                            <span data-i18n="btnNext">Lanjut</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= STEP 2: ROOM HUB (CUSTOM NAME & CALENDAR DATES) ================= -->
+        <div id="step-room-hub" class="page-step hidden flex flex-col items-center py-6 max-w-lg mx-auto w-full animate-pop">
+            <div class="w-full glass-box rounded-3xl p-6 lg:p-8 shadow-2xl">
+                <div class="text-center mb-6">
+                    <span class="text-xs font-bold text-blue-400 uppercase tracking-widest" data-i18n="step2Sub">Langkah 2 dari 3</span>
+                    <h3 class="text-2xl font-extrabold text-white light:text-slate-900 mt-1" data-i18n="step2Title">Atur Room & Kalender</h3>
+                    <p class="text-xs text-slate-400 light:text-slate-600 mt-1" data-i18n="step2Desc">Buat room baru dengan nama kustom atau gabung pakai kode unik.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Tab Selector -->
+                    <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-950 light:bg-slate-200">
+                        <button onclick="playSound('click'); switchRoomTab('create')" id="tabCreateBtn" class="py-2.5 rounded-lg text-xs font-bold bg-[#10377D] text-white transition">Buat Room</button>
+                        <button onclick="playSound('click'); switchRoomTab('join')" id="tabJoinBtn" class="py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">Gabung Room</button>
+                    </div>
+
+                    <!-- Create Room Form -->
+                    <div id="createRoomSection" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 light:text-slate-700 uppercase tracking-wider mb-2">Nama Room / Acara</label>
+                            <input type="text" id="inputCustomRoomName" placeholder="cth. Kerja Kelompok Skripsi" class="w-full px-4 py-3.5 rounded-xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-300 text-white light:text-slate-900 text-sm">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 light:text-slate-700 uppercase tracking-wider mb-2">Tanggal Mulai</label>
+                                <input type="date" id="inputStartDate" class="w-full px-3 py-3 rounded-xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-300 text-white light:text-slate-900 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 light:text-slate-700 uppercase tracking-wider mb-2">Tanggal Selesai</label>
+                                <input type="date" id="inputEndDate" class="w-full px-3 py-3 rounded-xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-300 text-white light:text-slate-900 text-xs">
+                            </div>
+                        </div>
+
+                        <button onclick="playSound('click'); createNewRoomCustom()" class="w-full py-3.5 rounded-xl bg-[#10377D] hover:bg-[#0b275b] text-white font-bold text-sm shadow-lg transition">
+                            Buat Room Sekarang 🚀
+                        </button>
+                    </div>
+
+                    <!-- Join Room Form (Hidden by default) -->
+                    <div id="joinRoomSection" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 light:text-slate-700 uppercase tracking-wider mb-2">Kode Room Acak Teman</label>
+                            <input type="text" id="inputRoomCode" placeholder="cth. KP-8821" class="w-full px-4 py-3.5 rounded-xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-300 text-white light:text-slate-900 font-mono uppercase text-sm">
+                        </div>
+                        <button onclick="playSound('click'); joinExistingRoom()" class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition">
+                            Masuk Room Teman 🔑
+                        </button>
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="playSound('click'); goToStep('profile')" class="w-full py-3 rounded-xl bg-slate-900 light:bg-slate-200 hover:opacity-80 text-slate-400 light:text-slate-700 text-xs font-semibold transition">
+                            <i class="fa-solid fa-arrow-left"></i> Ganti Profil
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= STEP 3: SCHEDULE MATRIX & HEATMAP (UP TO 00:00) ================= -->
+        <div id="step-schedule" class="page-step hidden flex flex-col space-y-6 w-full animate-pop">
+            <!-- Room Info Header -->
+            <div class="glass-box rounded-2xl p-5 lg:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                    <div id="myAvatarDisplay" class="w-12 h-12 rounded-2xl bg-[#10377D] flex items-center justify-center text-2xl shadow-lg">🐱</div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-bold text-white light:text-slate-900" id="roomTitleDisplay">Room Skripsi</h3>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Auto-Expiry 24 Jam</span>
+                        </div>
+                        <p class="text-xs text-slate-400 light:text-slate-600">Kode: <strong class="text-blue-400 font-mono" id="roomCodeDisplay">KP-8821</strong> • <span id="myNameDisplay">Budi</span> • Tanggal: <span id="roomDateRangeDisplay">01 Nov - 07 Nov 2026</span></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                    <button onclick="playSound('click'); copyRoomLink()" class="px-4 py-2.5 rounded-xl bg-slate-900 light:bg-slate-200 hover:opacity-80 border border-slate-700 light:border-slate-300 text-xs font-bold text-white light:text-slate-900 flex items-center gap-2 transition">
+                        <i class="fa-solid fa-link text-blue-400"></i> Salin Link
+                    </button>
+                    <button onclick="playSound('click'); openExportModal()" class="px-4 py-2.5 rounded-xl bg-[#10377D] hover:bg-[#0b275b] text-xs font-bold text-white flex items-center gap-2 shadow-lg shadow-[#10377D]/40 transition">
+                        <i class="fa-solid fa-download"></i> Export Hasil (PNG / PDF)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Sidebar Members & Detailed Color Legend -->
+                <div class="glass-box rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider mb-3 flex items-center justify-between">
+                            <span>Anggota Room</span>
+                            <span id="memberCount" class="px-2 py-0.5 rounded-full bg-blue-950 text-blue-400 text-[10px]">1 Orang</span>
+                        </h4>
+                        <div id="membersListContainer" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800/80 light:border-slate-200">
+                        <h4 class="text-xs font-semibold text-slate-300 light:text-slate-700 mb-2.5">Status Warna (Klik Kotak):</h4>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 rounded bg-emerald-500 shadow-sm shadow-emerald-500/50"></div>
+                                <span class="text-slate-300 light:text-slate-700">Hijau = <strong>Bisa banget / Boleh</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 rounded bg-amber-500"></div>
+                                <span class="text-slate-300 light:text-slate-700">Kuning = <strong>Mungkin / Tentatif</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 rounded bg-rose-500"></div>
+                                <span class="text-slate-300 light:text-slate-700">Merah = <strong>Ga bisa / Sibuk</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 rounded bg-slate-900 border border-slate-700 light:bg-slate-200"></div>
+                                <span class="text-slate-300 light:text-slate-700">Kosong = Belum diisi</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Schedule Matrix (Up to 00:00) -->
+                <div class="lg:col-span-3 glass-box rounded-2xl p-5 lg:p-6 flex flex-col space-y-5" id="scheduleExportArea">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-4 border-b border-slate-800/80 light:border-slate-200">
+                        <div>
+                            <h3 class="text-base font-bold text-white light:text-slate-900">Tabel Matriks Waktu (Hingga 00:00)</h3>
+                            <p class="text-xs text-slate-400 light:text-slate-600">Klik berulang pada kotak jam untuk berganti status warna.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="playSound('click'); saveScheduleAndReveal()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Simpan & Tampilkan Hasil ✨
+                            </button>
+                            <button onclick="playSound('click'); clearSchedule()" class="px-3 py-2 rounded-xl bg-slate-800 light:bg-slate-200 hover:opacity-80 text-xs text-slate-300 light:text-slate-700 transition" title="Reset">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Matrix Grid Container (08:00 to 00:00) -->
+                    <div class="overflow-x-auto pb-2">
+                        <div class="min-w-[700px]">
+                            <!-- Day Headers -->
+                            <div class="grid grid-cols-8 gap-1.5 mb-2 text-center text-xs font-bold text-slate-400 light:text-slate-600">
+                                <div class="py-2 text-left pl-2">Jam / Tanggal</div>
+                                <div class="py-2 bg-slate-900 light:bg-slate-200 rounded-lg">Senin</div>
+                                <div class="py-2 bg-slate-900 light:bg-slate-200 rounded-lg">Selasa</div>
+                                <div class="py-2 bg-slate-900 light:bg-slate-200 rounded-lg">Rabu</div>
+                                <div class="py-2 bg-slate-900 light:bg-slate-200 rounded-lg">Kamis</div>
+                                <div class="py-2 bg-slate-900 light:bg-slate-200 rounded-lg">Jumat</div>
+                                <div class="py-2 bg-slate-900 light:bg-slate-200 rounded-lg">Sabtu</div>
+                                <div class="py-2 bg-slate-900 light:bg-slate-200 rounded-lg">Minggu</div>
+                            </div>
+
+                            <!-- Time Slots up to 00:00 -->
+                            <div id="matrixGrid" class="space-y-1.5">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= RESULT REVEAL MODAL (WITH SEPARATE COOL ANIMATION) ================= -->
+    <div id="resultModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-box rounded-3xl p-6 lg:p-8 max-w-lg w-full shadow-2xl animate-pop space-y-6 relative overflow-hidden border border-blue-500/40">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-[#10377D]/30 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl shadow-xl shadow-emerald-500/40 animate-bounce-soft">
+                    🎉
+                </div>
+                <h3 class="text-2xl font-black text-white light:text-slate-900">Hasil Irisan Waktu Kelompok!</h3>
+                <p class="text-xs text-slate-400 light:text-slate-600">Semua jadwal telah dihitung secara otomatis oleh sistem.</p>
+            </div>
+
+            <!-- Aesthetic Result Card Preview -->
+            <div id="aestheticSummaryCard" class="p-5 rounded-2xl bg-slate-950/90 light:bg-slate-100 border border-slate-800 light:border-slate-300 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 light:border-slate-300 pb-3">
+                    <div>
+                        <h4 class="font-bold text-white light:text-slate-900 text-sm" id="resRoomTitle">Room Skripsi</h4>
+                        <span class="text-[10px] text-blue-400 font-mono" id="resRoomCode">KP-8821</span>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">100% Cocok</span>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-[#10377D]/20 border border-[#10377D]/50 text-center space-y-1">
+                    <span class="text-[10px] font-bold text-blue-300 uppercase tracking-wider">Waktu Luang Bersama Terbaik</span>
+                    <h5 class="text-base font-extrabold text-white light:text-slate-900" id="resBestTime">Kamis & Jumat, Pukul 19:00 - 22:00</h5>
+                    <p class="text-xs text-slate-300 light:text-slate-700" id="resMemberNotes">Seluruh 4 anggota kelompok bisa di jam ini!</p>
+                </div>
+            </div>
+
+            <!-- Export format selector buttons -->
+            <div class="space-y-3 pt-2">
+                <label class="block text-xs font-semibold text-slate-300 light:text-slate-700 uppercase tracking-wider text-center">Pilih Format Simpan / Download:</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="playSound('click'); exportAsPNG()" class="py-3 px-4 rounded-xl bg-[#10377D] hover:bg-[#0b275b] text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-file-image"></i> Simpan sebagai PNG
+                    </button>
+                    <button onclick="playSound('click'); exportAsPDF()" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-file-pdf"></i> Simpan sebagai PDF
+                    </button>
+                </div>
+                <button onclick="playSound('click'); closeResultModal()" class="w-full py-3 rounded-xl bg-slate-900 light:bg-slate-200 hover:opacity-80 text-xs font-semibold text-slate-400 light:text-slate-700 transition">
+                    Tutup & Kembali Edit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <p id="toastMessage" class="text-xs font-medium text-slate-200">Berhasil!</p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="content-layer py-6 text-center text-xs text-slate-500 border-t border-slate-800/80 light:border-slate-200">
+        <p>© 2026 Kapan Nieh? • Penyelamat Jadwal Gabutmu • Professional Web Experience</p>
+    </footer>
+
+    <!-- Script Application Logic -->
+    <script>
+        // Chibi Pixel Head Avatars (Head-only pixel representation via Emoji & Pixel styling)
+        const chibiAvatars = [
+            { id: 'cat', emoji: '🐱', name: 'Cat Head' },
+            { id: 'dog', emoji: '🐶', name: 'Dog Head' },
+            { id: 'panda', emoji: '🐼', name: 'Panda Head' },
+            { id: 'rabbit', emoji: '🐰', name: 'Rabbit Head' },
+            { id: 'owl', emoji: '🦉', name: 'Owl Head' },
+            { id: 'fox', emoji: '🦊', name: 'Fox Head' },
+            { id: 'alien', emoji: '👽', name: 'Alien Head' },
+            { id: 'ghost', emoji: '👻', name: 'Ghost Head' }
+        ];
+
+        let state = {
+            lang: 'id',
+            theme: 'dark',
+            soundEnabled: true,
+            currentUser: { name: '', avatar: 'cat' },
+            currentRoom: null,
+            mySchedule: {}
+        };
+
+        // Web Audio API Sound Synthesizer (No external mp3 needed)
+        let audioCtx = null;
+        function playSound(type) {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(580, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'success') {
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                }
+            } catch(e) {}
+        }
+
+        function toggleAudio() {
+            state.soundEnabled = !state.soundEnabled;
+            const icon = document.getElementById('audioIcon');
+            icon.className = state.soundEnabled ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-rose-400";
+            showToast(state.soundEnabled ? "Sound Effect Hidup 🔊" : "Sound Effect Dimatikan 🔇");
+        }
+
+        // Animated Background Particle Canvas
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        for (let i = 0; i < 35; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2 + 1,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                alpha: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        function animateBg() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const isDark = document.documentElement.classList.contains('dark');
+            ctx.fillStyle = isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(16, 55, 125, 0.12)';
+            
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
+        // Time slots up to 00:00 (Midnight)
+        const hoursList = [
+            '08:00', '09:00', '10:00', '11:00', '12:00', 
+            '13:00', '14:00', '15:00', '16:00', '17:00', 
+            '18:00', '19:00', '20:00', '21:00', '22:00', 
+            '23:00', '00:00'
+        ];
+        const daysList = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAvatarSelection();
+            renderMatrixGrid();
+            renderHistory();
+            // Default date range
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inputStartDate').value = today;
+            document.getElementById('inputEndDate').value = today;
+        });
+
+        function saveRoomToHistory(room) {
+            let history = JSON.parse(localStorage.getItem('kapan_nieh_history') || '[]');
+            // remove if duplicate code
+            history = history.filter(h => h.code !== room.code);
+            history.unshift({ code: room.code, title: room.title, date: new Date().toLocaleDateString() });
+            if (history.length > 5) history.pop();
+            localStorage.setItem('kapan_nieh_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const box = document.getElementById('recentRoomsBox');
+            const list = document.getElementById('recentRoomsList');
+            let history = JSON.parse(localStorage.getItem('kapan_nieh_history') || '[]');
+            if (history.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+            box.classList.remove('hidden');
+            list.innerHTML = history.map(h => `
+                <div onclick="playSound('click'); rejoinRoom('${h.code}', '${h.title}')" class="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 light:bg-slate-100 border border-slate-800/80 light:border-slate-300 hover:border-blue-500/50 cursor-pointer transition group">
+                    <div>
+                        <h4 class="text-xs font-bold text-white light:text-slate-900 group-hover:text-blue-400 transition">${h.title}</h4>
+                        <span class="text-[10px] font-mono text-slate-400">Kode: ${h.code} • ${h.date}</span>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg bg-[#10377D]/30 border border-[#10377D] text-blue-300 text-[10px] font-semibold">Buka <i class="fa-solid fa-arrow-right ml-1"></i></span>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('kapan_nieh_history');
+            renderHistory();
+            showToast('Riwayat dibersihkan.');
+        }
+
+        function rejoinRoom(code, title) {
+            state.currentRoom = {
+                code: code,
+                title: title,
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: new Date().toISOString().split('T')[0],
+                members: [ { ...state.currentUser } ]
+            };
+            initRoomView();
+        }
+
+        function goToStep(stepName) {
+            ['step-splash', 'step-profile', 'step-room-hub', 'step-schedule'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(`step-${stepName}`).classList.remove('hidden');
+        }
+
+        function renderAvatarSelection() {
+            const grid = document.getElementById('chibiAvatarGrid');
+            grid.innerHTML = chibiAvatars.map(av => `
+                <button type="button" onclick="playSound('click'); selectAvatar('${av.id}')" class="p-3 rounded-xl border flex flex-col items-center justify-center transition pixel-avatar ${state.currentUser.avatar === av.id ? 'bg-[#10377D]/40 border-[#10377D] scale-105 shadow-md shadow-[#10377D]/40' : 'bg-slate-950 light:bg-slate-100 border-slate-800 light:border-slate-300 hover:border-slate-700'}">
+                    <span class="text-3xl">${av.emoji}</span>
+                    <span class="text-[9px] text-slate-400 light:text-slate-600 mt-1 font-mono">${av.name}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectAvatar(id) {
+            state.currentUser.avatar = id;
+            renderAvatarSelection();
+        }
+
+        function submitProfile() {
+            const name = document.getElementById('inputNickname').value.trim();
+            if (!name) {
+                showToast('Masukkan nama panggilanmu dulu!', 'error');
+                return;
+            }
+            state.currentUser.name = name;
+            goToStep('room-hub');
+        }
+
+        function switchRoomTab(tab) {
+            const createSec = document.getElementById('createRoomSection');
+            const joinSec = document.getElementById('joinRoomSection');
+            const createBtn = document.getElementById('tabCreateBtn');
+            const joinBtn = document.getElementById('tabJoinBtn');
+
+            if (tab === 'create') {
+                createSec.classList.remove('hidden');
+                joinSec.classList.add('hidden');
+                createBtn.className = "py-2.5 rounded-lg text-xs font-bold bg-[#10377D] text-white transition";
+                joinBtn.className = "py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+            } else {
+                createSec.classList.add('hidden');
+                joinSec.classList.remove('hidden');
+                joinBtn.className = "py-2.5 rounded-lg text-xs font-bold bg-[#10377D] text-white transition";
+                createBtn.className = "py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+            }
+        }
+
+        function createNewRoomCustom() {
+            const roomName = document.getElementById('inputCustomRoomName').value.trim() || 'Room Kelompok';
+            const startDate = document.getElementById('inputStartDate').value;
+            const endDate = document.getElementById('inputEndDate').value;
+            const code = 'KP-' + Math.floor(1000 + Math.random() * 9000);
+
+            state.currentRoom = {
+                code: code,
+                title: roomName,
+                startDate: startDate,
+                endDate: endDate,
+                members: [ { ...state.currentUser } ]
+            };
+            saveRoomToHistory(state.currentRoom);
+            initRoomView();
+        }
+
+        function joinExistingRoom() {
+            const code = document.getElementById('inputRoomCode').value.trim().toUpperCase();
+            if (!code) {
+                showToast('Masukkan kode room teman!', 'error');
+                return;
+            }
+            state.currentRoom = {
+                code: code,
+                title: `Room ${code}`,
+                startDate: '2026-11-01',
+                endDate: '2026-11-07',
+                members: [
+                    { name: 'Andi (Host)', avatar: 'cat' },
+                    { name: 'Siti', avatar: 'panda' },
+                    { ...state.currentUser }
+                ]
+            };
+            saveRoomToHistory(state.currentRoom);
+            initRoomView();
+        }
+
+        function initRoomView() {
+            goToStep('schedule');
+            playSound('success');
+            document.getElementById('roomCodeDisplay').innerText = state.currentRoom.code;
+            document.getElementById('roomTitleDisplay').innerText = state.currentRoom.title;
+            document.getElementById('myNameDisplay').innerText = state.currentUser.name;
+            document.getElementById('roomDateRangeDisplay').innerText = `${state.currentRoom.startDate} s.d ${state.currentRoom.endDate}`;
+
+            const av = chibiAvatars.find(a => a.id === state.currentUser.avatar) || chibiAvatars[0];
+            document.getElementById('myAvatarDisplay').innerText = av.emoji;
+
+            renderMembersList();
+        }
+
+        function renderMembersList() {
+            const container = document.getElementById('membersListContainer');
+            document.getElementById('memberCount').innerText = `${state.currentRoom.members.length} Orang`;
+            container.innerHTML = state.currentRoom.members.map(m => {
+                const av = chibiAvatars.find(a => a.id === m.avatar) || chibiAvatars[0];
+                return `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 light:bg-slate-100 border border-slate-800 light:border-slate-300">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="text-xl">${av.emoji}</span>
+                            <div>
+                                <h5 class="text-xs font-bold text-white light:text-slate-900">${m.name}</h5>
+                                <span class="text-[10px] text-emerald-400">Siap voting</span>
+                            </div>
+                        </div>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMatrixGrid() {
+            const container = document.getElementById('matrixGrid');
+            container.innerHTML = hoursList.map(hour => {
+                let row = `<div class="grid grid-cols-8 gap-1.5 items-center">
+                    <div class="text-xs font-mono text-slate-400 light:text-slate-600">${hour}</div>`;
+                
+                daysList.forEach(day => {
+                    const key = `${day}-${hour}`;
+                    const status = state.mySchedule[key] || 'empty';
+                    row += `<div onclick="playSound('click'); cycleCellStatus('${key}')" id="cell-${key}" class="matrix-cell h-8 rounded-lg border cursor-pointer transition ${getCellStyle(status)}"></div>`;
+                });
+                row += `</div>`;
+                return row;
+            }).join('');
+        }
+
+        function getCellStyle(status) {
+            switch(status) {
+                case 'free': return 'bg-emerald-500 border-emerald-400 shadow-sm shadow-emerald-500/40';
+                case 'maybe': return 'bg-amber-500 border-amber-400 shadow-sm shadow-amber-500/40';
+                case 'busy': return 'bg-rose-500 border-rose-400 shadow-sm shadow-rose-500/40';
+                default: return 'bg-slate-950 light:bg-slate-200 border-slate-800 light:border-slate-300 hover:border-slate-600';
+            }
+        }
+
+        function cycleCellStatus(key) {
+            const current = state.mySchedule[key] || 'empty';
+            let next = 'free';
+            if (current === 'empty') next = 'free';
+            else if (current === 'free') next = 'maybe';
+            else if (current === 'maybe') next = 'busy';
+            else if (current === 'busy') next = 'empty';
+
+            state.mySchedule[key] = next;
+            const el = document.getElementById(`cell-${key}`);
+            el.className = `matrix-cell h-8 rounded-lg border cursor-pointer transition ${getCellStyle(next)}`;
+        }
+
+        function clearSchedule() {
+            state.mySchedule = {};
+            renderMatrixGrid();
+            showToast('Jadwal direset.');
+        }
+
+        function saveScheduleAndReveal() {
+            playSound('success');
+            document.getElementById('resRoomTitle').innerText = state.currentRoom ? state.currentRoom.title : 'Room Skripsi';
+            document.getElementById('resRoomCode').innerText = state.currentRoom ? state.currentRoom.code : 'KP-8821';
+            document.getElementById('resultModal').classList.remove('hidden');
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+
+        function copyRoomLink() {
+            const link = window.location.href.split('?')[0] + '?room=' + (state.currentRoom ? state.currentRoom.code : 'KP-8821');
+            navigator.clipboard.writeText(link);
+            showToast('Link room berhasil disalin!');
+        }
+
+        function exportAsPNG() {
+            showToast('Memproses gambar hasil voting...');
+            const card = document.getElementById('aestheticSummaryCard');
+            html2canvas(card, { scale: 2, backgroundColor: null }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `kapan-nieh-hasil-${state.currentRoom ? state.currentRoom.code : 'room'}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('Berhasil download PNG!');
+                closeResultModal();
+            });
+        }
+
+        function exportAsPDF() {
+            showToast('Memproses dokumen PDF...');
+            const { jsPDF } = window.jspdf;
+            html2canvas(document.getElementById('aestheticSummaryCard'), { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight);
+                pdf.save(`kapan-nieh-laporan-${state.currentRoom ? state.currentRoom.code : 'room'}.pdf`);
+                showToast('Berhasil download PDF!');
+                closeResultModal();
+            });
+        }
+
+        function toggleLanguage() {
+            state.lang = state.lang === 'id' ? 'en' : 'id';
+            document.getElementById('langLabel').innerText = state.lang.toUpperCase();
+            showToast(state.lang === 'id' ? 'Bahasa Indonesia' : 'English Language');
+        }
+
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            const icon = document.getElementById('themeIcon');
+            const htmlEl = document.documentElement;
+            
+            if (state.theme === 'light') {
+                htmlEl.classList.remove('dark');
+                htmlEl.classList.add('light');
+                document.body.className = "min-h-screen flex flex-col bg-slate-100 text-slate-900 transition-colors duration-300";
+                icon.className = "fa-solid fa-sun text-amber-500";
+            } else {
+                htmlEl.classList.remove('light');
+                htmlEl.classList.add('dark');
+                document.body.className = "min-h-screen flex flex-col bg-[#0b1329] text-slate-100 transition-colors duration-300";
+                icon.className = "fa-solid fa-moon text-amber-400";
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
