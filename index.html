@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kapan Nieh? - Penyelamat Jadwal Gabutmu</title>
+    <title>Nongkrong Yuk - Penyelamat Jadwal Gabutmu</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -101,7 +101,7 @@
             </div>
             <div>
                 <h1 class="font-extrabold text-lg tracking-tight text-white light:text-slate-900 flex items-center gap-2">
-                    Kapan Nieh? <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#10377D]/30 border border-[#10377D] text-blue-400">Pro</span>
+                    Nongkrong Yuk <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#10377D]/30 border border-[#10377D] text-blue-400">Pro</span>
                 </h1>
                 <p class="text-xs text-slate-400 light:text-slate-600">Penyelamat Jadwal gabutmu</p>
             </div>
@@ -419,7 +419,7 @@
 
     <!-- Footer -->
     <footer class="content-layer py-6 text-center text-xs text-slate-500 border-t border-slate-800/80 light:border-slate-200">
-        <p>© 2026 Kapan Nieh? • Penyelamat Jadwal Gabutmu • Professional Web Experience</p>
+        <p>© 2026 Nongkrong Yuk • Penyelamat Jadwal Gabutmu • Professional Web Experience</p>
     </footer>
 
     <!-- Script Application Logic -->
@@ -781,7 +781,7 @@
             const card = document.getElementById('aestheticSummaryCard');
             html2canvas(card, { scale: 2, backgroundColor: null }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `kapan-nieh-hasil-${state.currentRoom ? state.currentRoom.code : 'room'}.png`;
+                link.download = `nongkrong-yuk-hasil-${state.currentRoom ? state.currentRoom.code : 'room'}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 showToast('Berhasil download PNG!');
@@ -799,7 +799,7 @@
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
                 pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight);
-                pdf.save(`kapan-nieh-laporan-${state.currentRoom ? state.currentRoom.code : 'room'}.pdf`);
+                pdf.save(`nongkrong-yuk-laporan-${state.currentRoom ? state.currentRoom.code : 'room'}.pdf`);
                 showToast('Berhasil download PDF!');
                 closeResultModal();
             });
