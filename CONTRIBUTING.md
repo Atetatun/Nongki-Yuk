@@ -115,7 +115,7 @@ Sebuah tugas dianggap selesai jika:
 - Lolos review minimal 1 orang dan CI hijau.
 - Teruji di minimal Android Chrome, iOS Safari, dan desktop Chrome (untuk perubahan UI).
 - Tidak ada error di konsol dan state loading/error/kosong tertangani.
-- Disetujui Nadya (UX & QA) untuk fitur yang terlihat pengguna.
+- Disetujui Nadya untuk fitur yang terlihat pengguna.
 
 ## Standar Kode
 
@@ -131,9 +131,9 @@ Sebuah tugas dianggap selesai jika:
 
 | Area | Penanggung jawab utama |
 |---|---|
-| UI, grid, heatmap, `localStorage` | Elga |
-| API, algoritma Top Picks | Lea |
-| Skema database, migrasi, cron, CI/CD | Rian |
+| UI, grid, heatmap, components, `localStorage` | Rian |
+| API, algoritma Top Picks, validasi | Elga, Lea |
+| Skema database, migrasi, cron, CI/CD | Elga, Lea, Nadya |
 | Desain, state UI, rencana & eksekusi uji | Nadya |
 
 Penanggung jawab utama menjadi reviewer pertama untuk areanya, tetapi siapa pun boleh berkontribusi di area mana pun.
@@ -157,7 +157,7 @@ Buat Issue baru dengan label `bug` yang memuat:
 ## Keamanan
 
 - Jangan membagikan `DATABASE_URL` atau kredensial lewat grup chat publik; gunakan pengelola rahasia atau pesan pribadi.
-- Jika tidak sengaja meng-commit rahasia, **segera beri tahu ketua dan Rian** agar kunci tersebut diganti (menghapus commit saja tidak cukup).
+- Jika tidak sengaja meng-commit rahasia, **segera beri tahu ketua dan tim Back-End** agar kunci tersebut diganti (menghapus commit saja tidak cukup).
 - Laporkan celah keamanan secara pribadi kepada ketua tim, bukan lewat Issue publik.
 
 ## Kode Etik Tim

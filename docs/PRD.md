@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Status** | Draft untuk review tim |
-| **Tim** | Elga (Front-End), Lea (Back-End), Rian (Database & Arsitektur), Nadya (UI/UX & QA) |
+|| **Tim** | Rian (Front-End), Elga, Lea, Nadya (Back-End) |
 | **Dokumen sumber** | Dokumen Perencanaan Proyek v1 |
 | **Ringkasan** | Web-app berbasis tautan, tanpa login, untuk menemukan waktu luang bersama sebuah kelompok dalam hitungan detik |
 
@@ -255,15 +255,14 @@ Prinsip: PUT bersifat **idempoten** (menyimpan dua kali menghasilkan keadaan sam
 
 | Peran | Penanggung jawab | Tanggung jawab utama (deliverable) |
 |---|---|---|
-| **Front-End** | Elga | Grid sentuh (drag-select), heatmap, halaman utama + Riwayat Acara (`localStorage` dengan fallback), halaman acara, integrasi API, PWA-ready meta/Open Graph |
-| **Back-End** | Lea | Implementasi API (Bagian 6.7), algoritma Top Picks + unit test, pembuatan ID & token, rate limiting, validasi |
-| **Database & Arsitektur** | Rian | Skema & migrasi, indeks, kueri agregasi, cron retensi, pengaturan CI/CD & lingkungan, keamanan infrastruktur, uji beban bersama QA |
-| **UI/UX & QA** | Nadya | Wireframe → prototipe Figma, design system kecil (warna heatmap, komponen), semua state UI, rencana & eksekusi uji, uji usability, laporan bug |
+| **Front-End** | Rian | Grid sentuh (drag-select), heatmap, halaman utama + Riwayat Acara (`localStorage` dengan fallback), halaman acara, integrasi API, PWA-ready meta/Open Graph, komponen UI |
+| **Back-End** | Elga, Lea | Implementasi API (Bagian 6.7), algoritma Top Picks + unit test, pembuatan ID & token, rate limiting, validasi, skema & migrasi database, indeks, kueri agregasi |
+| **Infrastructure & QA** | Nadya | Cron retensi, pengaturan CI/CD & lingkungan, keamanan infrastruktur, uji beban, wireframe → prototipe Figma, design system kecil (warna heatmap, komponen), semua state UI, rencana & eksekusi uji, uji usability, laporan bug |
 
 **Prinsip kerja baru:**
 - **QA terlibat sejak Milestone 0** (menulis kriteria uji bersama PRD), bukan hanya di akhir.
 - **Kontrak API dibekukan lebih dulu** → Front-End bisa memakai *mock data* sementara Back-End bekerja paralel.
-- **Pairing:** Elga-Nadya untuk grid & heatmap; Lea-Rian untuk algoritma & kueri agregasi.
+- **Pairing:** Rian-Nadya untuk grid & heatmap; Elga-Lea untuk algoritma & kueri agregasi; Nadya untuk infrastructure.
 - *Daily* singkat (15 menit), *demo* tiap akhir sprint, tiap PR wajib 1 reviewer.
 
 ## 10. Rencana Pelaksanaan (4 minggu, dapat disesuaikan)

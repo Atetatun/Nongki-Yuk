@@ -31,7 +31,7 @@ Web-app berbasis tautan untuk menemukan waktu luang bersama sebuah kelompok, **t
 - [Node.js](https://nodejs.org/) versi 20 atau lebih baru
 - npm (atau pnpm/yarn, sesuai kesepakatan tim)
 - Git
-- Akses ke database PostgreSQL (minta connection string dari Rian)
+- Akses ke database PostgreSQL (minta connection string dari tim Back-End)
 
 ### Instalasi
 
@@ -91,10 +91,8 @@ nongkrong-app/
 
 | Peran | Nama |
 |---|---|
-| Front-End | Elga |
-| Back-End | Lea |
-| Database & Arsitektur | Rian |
-| UI/UX & QA | Nadya |
+| Front-End | Rian |
+| Back-End | Elga, Lea, Nadya |
 
 Ketua tim: _isi nama_
 
